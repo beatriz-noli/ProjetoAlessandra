@@ -422,35 +422,35 @@ def gerar_graficos(df, pasta_saida="ProjetoAlessandra/GRAFICOS"):
 
     df_plot = df.copy()
 
-    # 🔥 LIMPEZA FUNDAMENTAL
+    # LIMPEZA FUNDAMENTAL
     df_plot['VALOR NUMÉRICO'] = df_plot['VALOR NUMÉRICO'].astype(float)
     df_plot['DIARELATIVO'] = pd.to_numeric(df_plot['DIARELATIVO'], errors='coerce')
 
-    # 🔹 Criar coluna combinada
+    # Criar coluna combinada
     df_plot['EXAME_PARAM'] = df_plot['EXAME'] + " - " + df_plot['PARAMETRO']
 
-    # 🔁 Loop
+    # Loop
     for nome, grupo in df_plot.groupby('EXAME_PARAM'):
 
-        # 🔹 remover valores inválidos
+        # remover valores inválidos
         grupo = grupo.dropna(subset=['VALOR NUMÉRICO', 'DIARELATIVO'])
 
         if grupo.empty:
             continue
 
-        # 🔹 média por paciente no dia
+        # média por paciente no dia
         por_paciente = grupo.groupby(
             ['DIARELATIVO', 'PACIENTE']
         )['VALOR NUMÉRICO'].mean().reset_index()
 
-        # 🔹 média entre pacientes
+        #  média entre pacientes
         agrupado = por_paciente.groupby('DIARELATIVO').agg(
             media=('VALOR NUMÉRICO', 'mean'),
             std=('VALOR NUMÉRICO', 'std'),
             n=('PACIENTE', 'nunique')
         ).reset_index()
 
-        # 🔹 garantir tipos corretos
+        # garantir tipos corretos
         agrupado['media'] = agrupado['media'].astype(float)
         agrupado['std'] = agrupado['std'].astype(float).fillna(0)
 
@@ -471,7 +471,7 @@ def gerar_graficos(df, pasta_saida="ProjetoAlessandra/GRAFICOS"):
             for dia in dias
         ]
         
-        # 🔹 boxplot
+        # boxplot
         plt.boxplot(
             dados_plot,
             tick_labels=dias,
@@ -487,7 +487,7 @@ def gerar_graficos(df, pasta_saida="ProjetoAlessandra/GRAFICOS"):
             Line2D([0], [0], color='blue', lw=2,  linestyle='--', label='Média')
         ])
         
-        # 🔹 anotações
+        # anotações
         for i, valores in enumerate(dados_plot):
         
             media = np.mean(valores)
@@ -517,13 +517,13 @@ def gerar_graficos(df, pasta_saida="ProjetoAlessandra/GRAFICOS"):
         plt.grid()
         plt.tight_layout()
 
-        # 🔹 nome seguro
+        # nome seguro
         nome_arquivo = re.sub(r'[\\/*?:"<>|]', "", nome)
         nome_arquivo = nome_arquivo.replace(" ", "_") + ".png"
 
         caminho = f"{pasta_saida}/{nome_arquivo}"
 
-        # 🔹 salvar
+        # salvar
         plt.savefig(caminho, dpi=300)
         plt.close()
 
