@@ -171,6 +171,23 @@ Tabela_hemogramas_pivot_NUMERICO = Tabela_hemogramas.pivot_table(
 #     values='Valor',
 #     aggfunc='first'
 # )
+#%% Tabela única
+
+Tabela_Final = pd.concat([
+    pd.DataFrame({
+        "Paciente": Tabela_hemogramas["PACIENTE"],
+        "Exame-Parametro": Tabela_hemogramas["EXAME"] + "-" + Tabela_hemogramas["PARAMETRO"],
+        "Data": Tabela_hemogramas["DIARELATIVO"],
+        "Valor": Tabela_hemogramas['VALOR NUMÉRICO']
+    }),
+    pd.DataFrame({
+        "Paciente": Tabela_sinais["PACIENTE"],
+        "Exame-Parametro": Tabela_sinais["EXAME"] + "-" + Tabela_sinais["PARAMETRO"],
+        "Data": Tabela_sinais["DIARELATIVO"],
+        "Valor": Tabela_sinais['VALOR NUMÉRICO']
+    })
+], ignore_index=True)
+
 
 #%% Funcoes tabela
 
@@ -219,7 +236,7 @@ def tab_exame_numerico(Tabela_hemogramas, Tabela_sinais, exame_nome):
     tabela = pd.concat([tabela1, tabela2])
     return tabela
 
-A = tab_exame_numerico(Tabela_hemogramas, Tabela_sinais, "LP-HEMOGRAMA COMPLETOBasófilos")
+A = tab_exame_numerico(Tabela_hemogramas, Tabela_sinais, "LP-HEMOGRAMA COMPLETO Basófilos")
 
 import re
 import numpy as np
@@ -337,3 +354,4 @@ def gerar_graficos(df, pasta_saida="ProjetoAlessandra/GRAFICOS"):
         print(f"{nome} salvo")
 
     print(f"Gráficos salvos em: {pasta_saida}")
+    
