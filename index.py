@@ -4,11 +4,12 @@ import matplotlib.pyplot as plt
 #%% URLs dos dados
 url_hemogramas = "https://docs.google.com/spreadsheets/d/19dfvCBynglk-YGBYjxN_M_I3QAusQEMfuTsarrGiAPw/export?format=xlsx"
 url_sinais = "https://docs.google.com/spreadsheets/d/1MwdppHk_WDdVFSAG3ZzkXoE9MHLSfGMKbOaziZruyEw/export?format=xlsx"
-
+url_pacientes = "https://docs.google.com/spreadsheets/d/134QN9guFzVBUIctT9R1l0d7uZzVEYoyY/export?format=xlsx"
 
 #%% Leitura dos arquivos Excel
 xls_hemogramas = pd.ExcelFile(url_hemogramas)
 xls_sinais = pd.ExcelFile(url_sinais)
+xls_pacientes = pd.ExcelFile(url_pacientes)
 
 
 #%% Filtrar abas relevantes
