@@ -39,6 +39,7 @@ Tabela_sinais = pd.concat(
 Tabela_sinais.columns = Tabela_sinais.columns.str.upper()
 Tabela_sinais.rename(columns={'PARÂMETRO': 'PARAMETRO', 'VALOR': 'VALOR NUMÉRICO'}, inplace=True)
 
+tabela_pacientes = pd.read_excel(xls_pacientes, sheet_name="Tabela", header=0)
 
 #%% Limpeza inicial
 Tabela_hemogramas.dropna(how="all", inplace=True)
@@ -430,6 +431,8 @@ def tab_exame_numerico(Tabela_hemogramas, Tabela_sinais, exame_nome):
     tabela = pd.concat([tabela1, tabela2])
     return tabela
 
+Tabela_Final.to_csv("exames.csv", index=False)
+
 A = tab_exame_numerico(Tabela_hemogramas, Tabela_sinais, "LP-HEMOGRAMA COMPLETOBasófilos")
 
 import re
@@ -548,4 +551,3 @@ def gerar_graficos(df, pasta_saida="ProjetoAlessandra/GRAFICOS"):
         print(f"{nome} salvo")
 
     print(f"Gráficos salvos em: {pasta_saida}")
->>>>>>> origin/main
