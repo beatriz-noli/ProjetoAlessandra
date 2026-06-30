@@ -6,6 +6,7 @@ url_hemogramas = "https://docs.google.com/spreadsheets/d/19dfvCBynglk-YGBYjxN_M_
 url_sinais = "https://docs.google.com/spreadsheets/d/1MwdppHk_WDdVFSAG3ZzkXoE9MHLSfGMKbOaziZruyEw/export?format=xlsx"
 url_pacientes = "https://docs.google.com/spreadsheets/d/134QN9guFzVBUIctT9R1l0d7uZzVEYoyY/export?format=xlsx"
 
+
 #%% Leitura dos arquivos Excel
 xls_hemogramas = pd.ExcelFile(url_hemogramas)
 xls_sinais = pd.ExcelFile(url_sinais)
@@ -41,6 +42,7 @@ Tabela_sinais.rename(columns={'PARÂMETRO': 'PARAMETRO', 'VALOR': 'VALOR NUMÉRI
 
 
 #%% Limpeza inicial
+
 Tabela_hemogramas.dropna(how="all", inplace=True)
 Tabela_sinais.dropna(how="all", inplace=True)
 
@@ -64,7 +66,8 @@ substituicoes_exame = {
     "LP-TAP - TEMPO DE ATIVIDADE DE PROTROMBINA": "LP-TAP -TEMPO DE ATIVIDADE DE PROTROMBINA",
     "LP-TESTE RÁPIDO - SÍFILIS - TREPONEMA PALLIDUM": "LP-TESTE RÁPIDO - SÍFILIS-TREPONEMA PALLIDUM",
     "LP-ASPARTATO AMINOTRANSFERASE - (AST/TGO) - (AST/TGO)": "LP-ASPARTATO AMINOTRANSFERASE - (AST/TGO)-(AST/TGO)",
-    "LP-TTPA - TEMPO DE TROMBOPLASTINA PARCIAL ATIVADO": "LP-TTPA-TEMPO DE TROMBOPLASTINA PARCIAL ATIVADO"
+    "LP-TTPA - TEMPO DE TROMBOPLASTINA PARCIAL ATIVADO": "LP-TTPA-TEMPO DE TROMBOPLASTINA PARCIAL ATIVADO",
+    
 }
 
 substituicoes_parametro = {
@@ -100,10 +103,6 @@ for antigo, novo in substituicoes_parametro.items():
     
 #%% Limpeza Secundária (Padronização de Texto)
 
-print(
-    "Parâmetros únicos antes:",
-    Tabela_hemogramas["PARAMETRO"].nunique()
-)
 
 import unicodedata
 
@@ -166,14 +165,14 @@ equivalencias_exame = {
     "LP-ACIDO LACTICO-LACTATO":"LP-ACIDO LACTICO-LACTATO",
     "LP-GLICEMIA (GLICOSE)-SORO":"LP-GLICEMIA (GLICOSE) - SORO",
     "LP-PROTEINAS TOTAIS E FRACOES-PTF":"LP-PROTEINAS TOTAIS E FRACOES - PTF",
-    "PROTEINA C REATIVA (PCR)":"LP-PROTEINA C REATIVA (PCR)"
+    "PROTEINA C REATIVA (PCR)":"LP-PROTEINA C REATIVA (PCR)",
+    "LP-ASPARTATO AMINOTRANSFERASE" : "LP-ASPARTATO AMINOTRANSFERASE-(AST/TGO)",
+    "LP-ASPARTATO AMINOTRANSFERASE-(AST/TGO)-(AST/TGO)":"LP-ASPARTATO AMINOTRANSFERASE-(AST/TGO)",
+    "LP-TESTE RAPIDO-SIFILIS-TREPONEMA": "LP-TESTE RAPIDO-SIFILIS-TREPONEMA PALLIDUM",
+    "LP-TAP-TEMPO DE PROTROMBINA": "LP-TAP-TEMPO DE ATIVIDADE DE PROTROMBINA",
+    "LP-ALANINA AMINOTRANSFERASE-(ALT/TGP)" : "LP-ALANINA AMINOTRANSFERASE"
 }
 
-print("\nPCR ENCONTRADOS:")
-
-for exame in sorted(Tabela_hemogramas["EXAME"].unique()):
-    if "PCR" in exame:
-        print(repr(exame))
 
 Tabela_hemogramas["EXAME"] = (
     Tabela_hemogramas["EXAME"]
@@ -188,7 +187,15 @@ equivalencias_parametro = {
     "PROTEINAS TOTAIS:": "PROTEINAS TOTAIS",
     "RESULTADO:": "RESULTADO",
     "CELULAS EPITEIAIS": "CELULAS EPITELIAIS",
-    "R.D.W." : "R.D.W"
+    "R.D.W." : "R.D.W",
+    "OBA":"OBSERVACAO",
+    "OBS 1": "OBSERVACAO",
+    "OBS 2": "OBSERVACAO",
+    "OBS 3": "OBSERVACAO",
+    "OBS (PLAQUETAS)": "OBSERVACAO", 
+    "OBS":"OBSERVACAO",
+    "K":"POTASSIO",
+    "TTPA RATIO":"TTPA"
 }
 
 
@@ -288,10 +295,18 @@ Tabela_sinais["PARAMETRO"] = (
 for valor in sorted(Tabela_hemogramas["PARAMETRO"].dropna().unique()):
     print(repr(valor))
 
-print(
-    "Parâmetros únicos depois:",
-    Tabela_hemogramas["PARAMETRO"].nunique()
-)
+# ===========================
+# TESTE DOS PARÂMETROS "LP-"
+# ===========================
+
+parametros_lp = Tabela_hemogramas[
+    Tabela_hemogramas["PARAMETRO"].str.startswith("LP-", na=False)
+]
+
+print(parametros_lp[
+    ["EXAME", "PARAMETRO", "VALOR NUMÉRICO"]
+].drop_duplicates())
+
 
 #%% Processamento Hemogramas
 
@@ -423,35 +438,35 @@ def gerar_graficos(df, pasta_saida="ProjetoAlessandra/GRAFICOS"):
 
     df_plot = df.copy()
 
-    # LIMPEZA FUNDAMENTAL
+    # 🔥 LIMPEZA FUNDAMENTAL
     df_plot['VALOR NUMÉRICO'] = df_plot['VALOR NUMÉRICO'].astype(float)
     df_plot['DIARELATIVO'] = pd.to_numeric(df_plot['DIARELATIVO'], errors='coerce')
 
-    # Criar coluna combinada
+    # 🔹 Criar coluna combinada
     df_plot['EXAME_PARAM'] = df_plot['EXAME'] + " - " + df_plot['PARAMETRO']
 
-    # Loop
+    # 🔁 Loop
     for nome, grupo in df_plot.groupby('EXAME_PARAM'):
 
-        # remover valores inválidos
+        # 🔹 remover valores inválidos
         grupo = grupo.dropna(subset=['VALOR NUMÉRICO', 'DIARELATIVO'])
 
         if grupo.empty:
             continue
 
-        # média por paciente no dia
+        # 🔹 média por paciente no dia
         por_paciente = grupo.groupby(
             ['DIARELATIVO', 'PACIENTE']
         )['VALOR NUMÉRICO'].mean().reset_index()
 
-        #  média entre pacientes
+        # 🔹 média entre pacientes
         agrupado = por_paciente.groupby('DIARELATIVO').agg(
             media=('VALOR NUMÉRICO', 'mean'),
             std=('VALOR NUMÉRICO', 'std'),
             n=('PACIENTE', 'nunique')
         ).reset_index()
 
-        # garantir tipos corretos
+        # 🔹 garantir tipos corretos
         agrupado['media'] = agrupado['media'].astype(float)
         agrupado['std'] = agrupado['std'].astype(float).fillna(0)
 
@@ -472,7 +487,7 @@ def gerar_graficos(df, pasta_saida="ProjetoAlessandra/GRAFICOS"):
             for dia in dias
         ]
         
-        # boxplot
+        # 🔹 boxplot
         plt.boxplot(
             dados_plot,
             tick_labels=dias,
@@ -488,7 +503,7 @@ def gerar_graficos(df, pasta_saida="ProjetoAlessandra/GRAFICOS"):
             Line2D([0], [0], color='blue', lw=2,  linestyle='--', label='Média')
         ])
         
-        # anotações
+        # 🔹 anotações
         for i, valores in enumerate(dados_plot):
         
             media = np.mean(valores)
@@ -518,13 +533,13 @@ def gerar_graficos(df, pasta_saida="ProjetoAlessandra/GRAFICOS"):
         plt.grid()
         plt.tight_layout()
 
-        # nome seguro
+        # 🔹 nome seguro
         nome_arquivo = re.sub(r'[\\/*?:"<>|]', "", nome)
         nome_arquivo = nome_arquivo.replace(" ", "_") + ".png"
 
         caminho = f"{pasta_saida}/{nome_arquivo}"
 
-        # salvar
+        # 🔹 salvar
         plt.savefig(caminho, dpi=300)
         plt.close()
 
